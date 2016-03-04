@@ -1,0 +1,14 @@
+mincdir=$(includedir)/ming
+minc_HEADERS=\
+	m_config.h\
+	m_arch.h\
+	m_types.h\
+	m_macros.h\
+	m_log.h\
+	m_malloc.h\
+	m_startup.h\
+	m_hash.h\
+	m_rbtree.h\
+	m_list.h\
+	m_atomic.h\
+	ming.h
