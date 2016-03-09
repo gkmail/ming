@@ -17,65 +17,49 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.      *
  *****************************************************************************/
 
-/**
- * \file
- * Basic types definitions.
- */
-
-#ifndef _M_TYPES_H_
-#define _M_TYPES_H_
+#ifndef _M_FUNCTION_H_
+#define _M_FUNCTION_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "m_arch.h"
-#include "m_macros.h"
+#include "m_types.h"
+#include "m_hash.h"
 
-/**Boolean value.*/
-typedef uint8_t M_Bool;
+/**Variant type.*/
+typedef enum {
+	M_VAR_VAR, /**< Real variant.*/
+	M_VAR_ARG  /**< Argument.*/
+} M_VarType;
 
-/**Boolean value true.*/
-#define M_TRUE  1
-/**Boolean value false.*/
-#define M_FALSE 0
+/**Variant information.*/
+typedef struct {
+	M_HashNode node;  /**< Hash table node.*/
+	M_Quark    quark; /**< The name of the variant.*/
+	uint16_t   id;    /**< The variant's index.*/
+	uint16_t   type;  /**< The variant type.*/
+} M_VarInfo;
 
-/**Function result value.*/
-typedef int M_Result;
+/**Native function.*/
+#define M_FUNC_FL_NATIVE 1
 
-/**Function result: success.*/
-#define M_OK          1
-/**Function result: no error but do nothing.*/
-#define M_NONE        0
-/**Function result: failed.*/
-#define M_FAILED     -1
-/**Function result: not enough memory.*/
-#define M_ERR_NO_MEM -2
-/**Function result: value type error.*/
-#define M_ERR_TYPE   -3
-
-/**String.*/
-typedef struct M_String_s   M_String;
-/**Interned string.*/
-typedef M_String*           M_Quark;
-/**Array.*/
-typedef struct M_Array_s    M_Array;
-/**Object.*/
-typedef struct M_Object_s   M_Object;
 /**Function.*/
-typedef struct M_Function_s M_Function;
-/**Module.*/
-typedef struct M_Module_s   M_Module;
-/**Closure.*/
-typedef struct M_Closure_s  M_Closure;
-/**Value stack frame.*/
-typedef struct M_Frame_s    M_Frame;
-/**Actor.*/
-typedef struct M_Actor_s    M_Actor;
-/**General value.*/
-typedef uintptr_t           M_Value;
-/**Thread related data.*/
-typedef struct M_Thread_s   M_Thread;
+struct M_Function_s {
+	M_Module  *module;   /**< The module contains this function.*/
+	uint32_t   flags;    /**< The function's flags.*/
+	union {
+		struct {
+			M_Hash    var_hash; /**< The variant hash table.*/
+			uint8_t   nframe;   /**< Operated frame count.*/
+			uint16_t  bc_len;   /**< Byte code length.*/
+			uint8_t  *bc;       /**< Byte code buffer.*/
+		} bc;
+		/**Native function.*/
+		M_Result (*native)(M_Value thisv, uint32_t argc, const M_Value *argv,
+					uint32_t retc, M_Value *retv);
+	} f;
+};
 
 #ifdef __cplusplus
 }

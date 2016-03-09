@@ -17,65 +17,91 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.      *
  *****************************************************************************/
 
-/**
- * \file
- * Basic types definitions.
- */
-
-#ifndef _M_TYPES_H_
-#define _M_TYPES_H_
+#ifndef _M_THREAD_H_
+#define _M_THREAD_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "m_arch.h"
-#include "m_macros.h"
+#include "m_types.h"
 
-/**Boolean value.*/
-typedef uint8_t M_Bool;
-
-/**Boolean value true.*/
-#define M_TRUE  1
-/**Boolean value false.*/
-#define M_FALSE 0
-
-/**Function result value.*/
-typedef int M_Result;
-
-/**Function result: success.*/
-#define M_OK          1
-/**Function result: no error but do nothing.*/
-#define M_NONE        0
-/**Function result: failed.*/
-#define M_FAILED     -1
-/**Function result: not enough memory.*/
-#define M_ERR_NO_MEM -2
-/**Function result: value type error.*/
-#define M_ERR_TYPE   -3
-
-/**String.*/
-typedef struct M_String_s   M_String;
-/**Interned string.*/
-typedef M_String*           M_Quark;
-/**Array.*/
-typedef struct M_Array_s    M_Array;
-/**Object.*/
-typedef struct M_Object_s   M_Object;
-/**Function.*/
-typedef struct M_Function_s M_Function;
-/**Module.*/
-typedef struct M_Module_s   M_Module;
-/**Closure.*/
-typedef struct M_Closure_s  M_Closure;
-/**Value stack frame.*/
-typedef struct M_Frame_s    M_Frame;
-/**Actor.*/
-typedef struct M_Actor_s    M_Actor;
-/**General value.*/
-typedef uintptr_t           M_Value;
 /**Thread related data.*/
-typedef struct M_Thread_s   M_Thread;
+struct M_Thread_s {
+	M_Actor *actor;    /**< Current running actor in this thread.*/
+	void   **nb_stack; /**< New borned object stack.*/
+	uint32_t nb_size;  /**< New borned object stack size.*/
+	uint32_t nb_top;   /**< Top of the new borned object stack.*/
+};
+
+/** \cond */
+extern pthread_key_t m_thread_key;
+extern uint32_t      m_thread_num;
+extern uint32_t      m_paused_thread_num;
+
+extern void m_thread_startup (void);
+extern void m_thread_shutdown (void);
+/** \endcond */
+
+/**
+ * Get the current thread data.
+ * \return The current thread's data.
+ */
+static inline M_Thread*
+m_thread_self (void)
+{
+	M_Thread *th;
+
+	th = (M_Thread*)pthread_getspecific(m_thread_key);
+
+	assert(th);
+
+	return th;
+}
+
+/**
+ * Pause the current thread.
+ */
+static inline void
+m_thread_pause (void)
+{
+	m_paused_thread_num ++;
+}
+
+/**
+ * Resume the current thread.
+ */
+static inline void
+m_thread_resume (void)
+{
+	m_paused_thread_num --;
+}
+
+/**
+ * Pause all threads.
+ */
+extern void m_thread_pause_all (void);
+
+/**
+ * Resume all threads.
+ */
+extern void m_thread_resume_all (void);
+
+/**
+ * Leave the ming environment to run the native code.
+ */
+extern void  m_thread_leave (void);
+
+/**
+ * Enter the ming environment.
+ */
+extern void  m_thread_enter (void);
+
+/**
+ * Check if the GC process need to be started.
+ * And pause the current thread until the GC process end when GC is running.
+ */
+extern void  m_thread_check (void);
 
 #ifdef __cplusplus
 }

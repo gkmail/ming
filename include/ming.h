@@ -36,6 +36,9 @@ extern "C" {
 #include <m_list.h>
 #include <m_cmp.h>
 #include <m_atomic.h>
+#include <m_value.h>
+#include <m_gc.h>
+#include <m_thread.h>
 
 #ifdef __cplusplus
 }

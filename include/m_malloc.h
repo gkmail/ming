@@ -30,6 +30,7 @@ extern "C" {
 #endif
 
 #include "m_types.h"
+#include "m_log.h"
 
 /**
  * Allocate a new buffer.
@@ -91,6 +92,15 @@ m_malloc0 (size_t size)
 #define M_NEW0(type, n) m_malloc0(sizeof(type) * (n))
 /**Resize a structure array which type is \a type.*/
 #define M_RENEW(ptr, type, n) m_realloc(ptr, sizeof(type) * (n))
+
+static inline void
+m_assert_alloc (void *ptr)
+{
+	if (!ptr) {
+		M_FATAL("not enough memory");
+		abort();
+	}
+}
 
 #ifdef __cplusplus
 }

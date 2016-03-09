@@ -31,44 +31,90 @@ extern "C" {
 
 #include "m_types.h"
 
-/**Pointer offset.*/
-typedef uint32_t M_GCPtrOffset;
-/**Size.*/
-typedef uint32_t M_GCSize;
-/**GC managed object type.*/
-typedef int      M_GCObjType;
+/**The object contains pointer.*/
+#define M_GC_OBJ_FL_PTR   1
+/**The object can be marked as white directly.*/
+#define M_GC_OBJ_FL_WHITE 2
 
-/**GC managed object information.*/
+/**The buffer must be allocated in old zone.*/
+#define M_GC_BUF_FL_OLD   1
+/**Executable code buffer.*/
+#define M_GC_BUF_FL_EXE   2
+/**The buffer contains pointer.*/
+#define M_GC_BUF_FL_PTR   4
+
+/**GC managed object type.*/
+typedef enum M_GCObjType_e M_GCObjType;
+
+/**Pointer mark function.*/
+typedef void (*M_GCMarkFunc)(void *ptr, M_GCObjType type, uint32_t size);
+
+/**GC data type information.*/
 typedef struct {
-	M_GCSize             size; /**< Object size in bytes.*/
-	const M_GCPtrOffset *ptrs; /**< Pointers offset in the object.*/
+	uint32_t flags;  /**< Flags.*/
+	uint32_t size;   /**< Size in bytes.*/
+	/**Mark the pointer in the data buffer.*/
+	void (*mark) (void *ptr, uint32_t size, M_GCMarkFunc func);
+	/**Data type finalize function.*/
+	void (*final) (void *ptr, uint32_t size);
 } M_GCObjInfo;
 
-/**
- * Allocate a value buffer.
- * Value buffer is a buffer filled with M_Value.
- * GC should scan each value to find the pointer in it.
- * \param[in] size Value count in the buffer.
- * \return The new value buffer.
- */
-extern M_Value* m_gc_alloc_vbuf (M_GCSize size);
+/**GC managed data type.*/
+enum M_GCObjType_e {
+	M_GC_BUF = -1,     /**< Buffer, not an object.*/
+	M_GC_OBJ_PTR,      /**< Pointer pointed to an object or closure.*/
+	M_GC_OBJ_DOUBLE,   /**< Double precision number.*/
+	M_GC_OBJ_STRING,   /**< String.*/
+	M_GC_OBJ_OBJECT,   /**< Object.*/
+	M_GC_OBJ_FUNCTION, /**< Function.*/
+	M_GC_OBJ_CLOSURE,  /**< Closure.*/
+	M_GC_OBJ_ARRAY,    /**< Array.*/
+	M_GC_OBJ_FRAME     /**< Value frame.*/
+};
+
+/** \cond */
+extern pthread_mutex_t m_gc_lock;
+
+extern void m_gc_startup (void);
+extern void m_gc_shutdown (void);
+/** \endcond */
 
 /**
- * Allocate a data buffer.
- * Data buffer has not any pointer in it.
- * \param[in] Data buffer size in bytes.
- * \return The new data buffer.
+ * Allocate a new object managed by GC.
+ * \param type GC object type.
+ * \return The pointer of the new buffer.
+ * \retval NULL On error.
  */
-extern void*    m_gc_alloc_dbuf (M_GCSize size);
+extern void* m_gc_alloc_obj (M_GCObjType type);
 
 /**
- * Allocate a new object.
- * Object has some pointers in it.
- * GC should use pointer offst table in M_GCObjInfo to find the pointers.
- * \param[in] type The object type.
- * \return The pointer to new the object.
+ * Allocate a new buffer managed by GC.
+ * \param size The buffer size in bytes.
+ * \param flags Allocate flags.
+ * \return The pointer of the new buffer.
+ * \retval NULL On error.
  */
-extern void*    m_gc_alloc_obj (M_GCObjType type);
+extern void* m_gc_alloc_buf (size_t size, uint32_t flags);
+
+/**
+ * Resize a buffer managed by GC.
+ * \param[in] ptr The old buffer's pointer.
+ * \param old_size The buffer's old size in bytes.
+ * \param new_size The buffer's new size in bytes.
+ * \param flags Allocate flags.
+ * \return The pointer of the new buffer.
+ * \retval NULL On error.
+ */
+extern void* m_gc_realloc_buf (void *ptr, size_t old_size,
+			size_t new_size, uint32_t flags);
+
+/**
+ * Free an unused buffer managed by GC.
+ * \param[in] ptr The pointer of the buffer.
+ * \param size The buffer size in bytes.
+ * \param flags Allocate flags.
+ */
+extern void  m_gc_free_buf (void *ptr, uint32_t size, uint32_t flags);
 
 #ifdef __cplusplus
 }

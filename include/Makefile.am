@@ -11,4 +11,6 @@ minc_HEADERS=\
 	m_rbtree.h\
 	m_list.h\
 	m_atomic.h\
+	m_gc.h\
+	m_thread.h\
 	ming.h

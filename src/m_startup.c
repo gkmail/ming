@@ -21,7 +21,8 @@
 
 #include <m_log.h>
 #include <m_startup.h>
-#include <m_log.h>
+#include <m_gc.h>
+#include <m_thread.h>
 
 static pthread_once_t once = PTHREAD_ONCE_INIT;
 
@@ -30,6 +31,8 @@ shutdown (void)
 {
 	M_INFO("ming shutdown");
 
+	m_thread_shutdown();
+	m_gc_shutdown();
 	m_log_shutdown();
 }
 
@@ -39,6 +42,9 @@ startup (void)
 	m_log_startup();
 
 	M_INFO("ming startup");
+
+	m_gc_startup();
+	m_thread_startup();
 
 	atexit(shutdown);
 }
