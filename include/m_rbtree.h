@@ -57,10 +57,6 @@ typedef struct {
 	void  (*free_node) (void *ptr);
 } M_RBTreeOps;
 
-/**Get container structure pointer from M_RBNode pointer.*/
-#define m_rbt_value(node, type, member)\
-	((node) ? M_CONTAINER_OF(node, type, member) : NULL)
-
 /**
  * Traverse the nodes in the RB tree.
  * \code{.c}
@@ -126,9 +122,9 @@ typedef struct {
  * \a tree is the RB tree pointer.
  */
 #define m_rbt_foreach_value(val, tree, member)\
-	for (val = m_rbt_value(m_rbt_first_node(tree), typeof(*(val)), member);\
+	for (val = m_node_value(m_rbt_first_node(tree), typeof(*(val)), member);\
 				val;\
-				val = m_rbt_value(m_rbt_next_node(&(val)->member),\
+				val = m_node_value(m_rbt_next_node(&(val)->member),\
 					typeof(*(val)), member))
 
 /**
@@ -156,8 +152,8 @@ typedef struct {
  * \a tree is the RB tree pointer.
  */
 #define m_rbt_foreach_value_safe(val, nval, tree, member)\
-	for (val = m_rbt_value(m_rbt_first_node(tree), typeof(*(val)), member);\
-				nval = val ? m_rbt_value(m_rbt_next_node(&(val)->member),\
+	for (val = m_node_value(m_rbt_first_node(tree), typeof(*(val)), member);\
+				nval = val ? m_node_value(m_rbt_next_node(&(val)->member),\
 					typeof(*(val)), member)\
 				: NULL, val;\
 				val = nval)
@@ -227,9 +223,9 @@ typedef struct {
  * \a tree is the RB tree pointer.
  */
 #define m_rbt_foreach_value_r(val, tree, member)\
-	for (val = m_rbt_value(m_rbt_last_node(tree), typeof(*(val)), member);\
+	for (val = m_node_value(m_rbt_last_node(tree), typeof(*(val)), member);\
 				val;\
-				val = m_rbt_value(m_rbt_prev_node(&(val)->member),\
+				val = m_node_value(m_rbt_prev_node(&(val)->member),\
 					typeof(*(val)), member))
 
 /**
@@ -257,8 +253,8 @@ typedef struct {
  * \a tree is the RB tree pointer.
  */
 #define m_rbt_foreach_value_safe_r(val, nval, tree, member)\
-	for (val = m_rbt_value(m_rbt_last_node(tree), typeof(*(val)), member);\
-				nval = val ? m_rbt_value(m_rbt_prev_node(&(val)->member),\
+	for (val = m_node_value(m_rbt_last_node(tree), typeof(*(val)), member);\
+				nval = val ? m_node_value(m_rbt_prev_node(&(val)->member),\
 					typeof(*(val)), member)\
 				: NULL, val;\
 				val = nval)

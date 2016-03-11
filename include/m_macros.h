@@ -94,6 +94,23 @@ extern "C" {
 		b = _tmp;\
 	M_STMT_END
 
+/**Increase a number to align to value which is power of 2.*/
+#define M_ALIGN_UP(n, a)\
+	(((n) + (a) - 1) & ~((a) - 1))
+
+/**Decrease a number to align to value which is power of 2.*/
+#define M_ALIGN_DOWN(n, a)\
+	((n) & ~((a) - 1))
+
+/**Get the container structure pointer from list node pointer.*/
+#define m_node_value(node, type, member)\
+	({\
+	 void *ptr = (void*)(node);\
+	 type *ret;\
+	 ret = ptr ? M_CONTAINER_OF(ptr, type, member) : NULL;\
+	 ret;\
+	 })
+
 #ifdef __cplusplus
 }
 #endif

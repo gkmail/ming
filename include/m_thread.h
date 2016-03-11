@@ -25,22 +25,33 @@ extern "C" {
 #endif
 
 #include "m_types.h"
+#include "m_list.h"
+
+/**The thread is paused.*/
+#define M_THREAD_FL_PAUSED 1
 
 /**Thread related data.*/
 struct M_Thread_s {
-	M_Actor *actor;    /**< Current running actor in this thread.*/
-	void   **nb_stack; /**< New borned object stack.*/
-	uint32_t nb_size;  /**< New borned object stack size.*/
-	uint32_t nb_top;   /**< Top of the new borned object stack.*/
+	M_List     node;     /**< List node.*/
+	M_Actor   *actor;    /**< Current running actor in this thread.*/
+	uintptr_t *nb_stack; /**< New borned object stack.*/
+	uint32_t   nb_size;  /**< New borned object stack size.*/
+	uint32_t   nb_top;   /**< Top of the new borned object stack.*/
+	uint32_t   flags;    /**< The thread's flags.*/
 };
 
 /** \cond */
-extern pthread_key_t m_thread_key;
-extern uint32_t      m_thread_num;
-extern uint32_t      m_paused_thread_num;
+#define M_GC_NBSTK_FLAGS  (M_GC_BUF_FL_PERMANENT | M_GC_BUF_FL_PTR)
+
+extern M_List          m_thread_list;
+extern pthread_key_t   m_thread_key;
+extern pthread_mutex_t m_thread_lock;
+extern uint32_t        m_thread_num;
+extern uint32_t        m_paused_thread_num;
 
 extern void m_thread_startup (void);
 extern void m_thread_shutdown (void);
+extern void m_thread_check_nl (void);
 /** \endcond */
 
 /**
@@ -53,28 +64,9 @@ m_thread_self (void)
 	M_Thread *th;
 
 	th = (M_Thread*)pthread_getspecific(m_thread_key);
-
 	assert(th);
 
 	return th;
-}
-
-/**
- * Pause the current thread.
- */
-static inline void
-m_thread_pause (void)
-{
-	m_paused_thread_num ++;
-}
-
-/**
- * Resume the current thread.
- */
-static inline void
-m_thread_resume (void)
-{
-	m_paused_thread_num --;
 }
 
 /**
@@ -102,6 +94,11 @@ extern void  m_thread_enter (void);
  * And pause the current thread until the GC process end when GC is running.
  */
 extern void  m_thread_check (void);
+
+/**
+ * Create a new thread to run actors.
+ */
+extern void  m_thread_create (void);
 
 #ifdef __cplusplus
 }

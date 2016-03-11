@@ -39,6 +39,8 @@ extern "C" {
 #include <m_value.h>
 #include <m_gc.h>
 #include <m_thread.h>
+#include <m_string.h>
+#include <m_array.h>
 
 #ifdef __cplusplus
 }

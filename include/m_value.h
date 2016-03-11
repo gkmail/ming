@@ -382,11 +382,14 @@ static inline M_Value
 m_value_from_double (double d)
 {
 	double *pd;
+	size_t id;
 
-	pd = m_gc_alloc_obj(M_GC_OBJ_DOUBLE);
+	pd = m_gc_alloc_obj(M_GC_OBJ_DOUBLE, &id);
 	m_assert_alloc(pd);
 
 	*pd = d;
+
+	/*m_gc_add_obj(id);*/
 
 	return (M_Value)pd;
 }
@@ -442,11 +445,14 @@ static inline M_Value
 m_value_from_object (M_Object *obj)
 {
 	uintptr_t *ptr;
+	size_t id;
 
-	ptr = m_gc_alloc_obj(M_GC_OBJ_PTR);
+	ptr = m_gc_alloc_obj(M_GC_OBJ_PTR, &id);
 	m_assert_alloc(ptr);
 
 	*ptr = ((uintptr_t)obj) | M_PTR_TYPE_OBJECT;
+
+	m_gc_add_obj(id);
 
 	return m_value_from_ptr((void*)ptr);
 }
@@ -460,11 +466,14 @@ static inline M_Value
 m_value_from_closure (M_Closure *clos)
 {
 	uintptr_t *ptr;
+	size_t id;
 
-	ptr = m_gc_alloc_obj(M_GC_OBJ_PTR);
+	ptr = m_gc_alloc_obj(M_GC_OBJ_PTR, &id);
 	m_assert_alloc(ptr);
 
 	*ptr = ((uintptr_t)clos) | M_PTR_TYPE_CLOSURE;
+
+	m_gc_add_obj(id);
 
 	return m_value_from_ptr((void*)ptr);
 }
@@ -478,11 +487,14 @@ static inline M_Value
 m_value_from_array (M_Array *array)
 {
 	uintptr_t *ptr;
+	size_t id;
 
-	ptr = m_gc_alloc_obj(M_GC_OBJ_PTR);
+	ptr = m_gc_alloc_obj(M_GC_OBJ_PTR, &id);
 	m_assert_alloc(ptr);
 
 	*ptr = ((uintptr_t)array) | M_PTR_TYPE_ARRAY;
+
+	m_gc_add_obj(id);
 
 	return m_value_from_ptr((void*)ptr);
 }

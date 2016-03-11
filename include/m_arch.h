@@ -63,13 +63,15 @@ extern "C" {
 #include <math.h>
 #endif
 
-#ifdef LIMITS_H
+#ifdef HAVE_LIMITS_H
 #include <limits.h>
 #endif
 
 #ifdef STDC_HEADERS
 #include <stdarg.h>
 #endif
+
+#include <sys/mman.h>
 
 #include <assert.h>
 

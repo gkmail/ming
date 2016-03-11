@@ -107,7 +107,7 @@ traverse_test (void)
 
 	i = 0;
 	m_list_foreach(node, &head) {
-		in = m_list_value(node, IntNode, node);
+		in = m_node_value(node, IntNode, node);
 		if (in->i != i){
 			M_ERROR("traverse error");
 		}
@@ -129,7 +129,7 @@ traverse_test (void)
 
 	i = count;
 	m_list_foreach_r(node, &head) {
-		in = m_list_value(node, IntNode, node);
+		in = m_node_value(node, IntNode, node);
 		if (in->i != i - 1){
 			M_ERROR("traverse error");
 		}
@@ -149,7 +149,7 @@ traverse_test (void)
 		M_ERROR("traverse error");
 
 	m_list_foreach_safe(node, nnode, &head) {
-		in = m_list_value(node, IntNode, node);
+		in = m_node_value(node, IntNode, node);
 		if ((in->i % 10) == 0) {
 			m_list_remove(node);
 			m_free(node);
@@ -157,7 +157,7 @@ traverse_test (void)
 	}
 
 	m_list_foreach_safe_r(node, nnode, &head) {
-		in = m_list_value(node, IntNode, node);
+		in = m_node_value(node, IntNode, node);
 		if ((in->i % 10) == 1) {
 			m_list_remove(node);
 			m_free(node);
@@ -221,7 +221,7 @@ slist_test (void)
 
 	i = count;
 	m_slist_foreach(node, &head) {
-		in = m_slist_value(node, SIntNode, node);
+		in = m_node_value(node, SIntNode, node);
 		if (in->i != i - 1) {
 			M_ERROR("slist value error");
 		}
@@ -246,7 +246,7 @@ slist_test (void)
 		if (!node) {
 			M_ERROR("pop error");
 		} else {
-			in = m_slist_value(node, SIntNode, node);
+			in = m_node_value(node, SIntNode, node);
 			if (in->i != count - i - 1) {
 				M_ERROR("node value error");
 			}

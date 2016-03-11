@@ -13,4 +13,6 @@ minc_HEADERS=\
 	m_atomic.h\
 	m_gc.h\
 	m_thread.h\
+	m_string.h\
+	m_array.h\
 	ming.h

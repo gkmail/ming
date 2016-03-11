@@ -17,43 +17,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.      *
  *****************************************************************************/
 
-#ifndef _M_OBJECT_H_
-#define _M_OBJECT_H_
+/**
+ * \file
+ * String.
+ */
+
+#ifndef _M_STRING_H_
+#define _M_STRING_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include "m_types.h"
-#include "m_hash.h"
 
-/**The property is an accessor.*/
-#define M_PROP_FL_ACCESSOR   1
-/**The property is writable.*/
-#define M_PROP_FL_WRITABLE   2
-/**The property is enumerable.*/
-#define M_PROP_FL_ENUMERABLE 4
+typedef uint16_t M_UChar;
 
-/**Property.*/
-typedef struct {
-	M_HashNode node;  /**< Hash table node.*/
-	M_Quark    quark; /**< The name of the property.*/
-	uint16_t   id;    /**< The property's index.*/
-	uint16_t   flags; /**< The property's flags.*/
-} M_Property;
-
-/**The object is configurable.*/
-#define M_OBJ_FL_CONFIGURABLE 1
-/**The object is mutable.*/
-#define M_OBJ_FL_MUTABLE      2
-
-/**Object.*/
-struct M_Object_s {
-	M_Hash   prop_hash; /**< The properties hash table.*/
-	M_Value  protov;    /**< The prototype value.*/
-	M_Value *v;         /**< The property values.*/
-	uint16_t nv;        /**< The number of property values.*/
-	uint16_t flags;     /**< The object's flags.*/
+struct M_String_s {
+	size_t   len;
+	M_UChar *chars;
 };
 
 #ifdef __cplusplus

@@ -40,10 +40,6 @@ struct M_List_s {
 	M_List *next; /**< The next node in the list.*/
 };
 
-/**Get the container structure pointer from list node pointer.*/
-#define m_list_value(node, type, member)\
-	((node) ? M_CONTAINER_OF(node, type, member) : NULL)
-
 /**
  * Traverse the nodes in the list.
  */
@@ -80,17 +76,17 @@ struct M_List_s {
  * Traverse the values in the list.
  */
 #define m_list_foreach_value(val, head, member)\
-	for (val = m_list_value((head)->next, typeof(*(val)), member);\
-				val != m_list_value(head, typeof(*(val)), member);\
-				val = m_list_value((val)->member.next, typeof(*(val)), member))
+	for (val = m_node_value((head)->next, typeof(*(val)), member);\
+				val != m_node_value(head, typeof(*(val)), member);\
+				val = m_node_value((val)->member.next, typeof(*(val)), member))
 
 /**
  * Traverse the values in the list reversely.
  */
 #define m_list_foreach_value_r(val, head, member)\
-	for (val = m_list_value((head)->prev, typeof(*(val)), member);\
-				val != m_list_value(head, typeof(*(val)), member);\
-				val = m_list_value((val)->member.prev, typeof(*(val)), member))
+	for (val = m_node_value((head)->prev, typeof(*(val)), member);\
+				val != m_node_value(head, typeof(*(val)), member);\
+				val = m_node_value((val)->member.prev, typeof(*(val)), member))
 
 /**
  * Traverse the values in the list safely.
@@ -98,9 +94,9 @@ struct M_List_s {
  * You can remove current node safely.
  */
 #define m_list_foreach_value_safe(val, nval, head, member)\
-	for (val = m_list_value((head)->next, typeof(*(val)), member);\
-				nval = m_list_value((val)->member.next, typeof(*(val)), member),\
-				val != m_list_value(head, typeof(*(val)), member);\
+	for (val = m_node_value((head)->next, typeof(*(val)), member);\
+				nval = m_node_value((val)->member.next, typeof(*(val)), member),\
+				val != m_node_value(head, typeof(*(val)), member);\
 				val = nval)
 
 /**
@@ -109,9 +105,9 @@ struct M_List_s {
  * You can remove current node safely.
  */
 #define m_list_foreach_value_safe_r(val, pval, head, member)\
-	for (val = m_list_value((head)->prev, typeof(*(val)), member);\
-				pval = m_list_value((val)->member.prev, typeof(*(val)), member),\
-				val != m_list_value(head, typeof(*(val)), member);\
+	for (val = m_node_value((head)->prev, typeof(*(val)), member);\
+				pval = m_node_value((val)->member.prev, typeof(*(val)), member),\
+				val != m_node_value(head, typeof(*(val)), member);\
 				val = pval)
 
 /**
@@ -190,10 +186,6 @@ struct M_SList_s {
 	M_SList *next; /**< The next node in the list.*/
 };
 
-/**Get the container structure pointer from single linked list node pointer.*/
-#define m_slist_value(node, type, member)\
-	((node) ? M_CONTAINER_OF(node, type, member) : NULL)
-
 /**
  * Traverse the nodes in the single linked list.
  */
@@ -214,9 +206,9 @@ struct M_SList_s {
  * Traverse the values in the single linked list.
  */
 #define m_slist_foreach_value(val, head, member)\
-	for (val = m_slist_value((head)->next, typeof(*(val)), member);\
+	for (val = m_node_value((head)->next, typeof(*(val)), member);\
 				val;\
-				val = m_slist_value((val)->member.next,\
+				val = m_node_value((val)->member.next,\
 					typeof(*(val)), member))
 
 /**
@@ -225,9 +217,9 @@ struct M_SList_s {
  * You can free the current value safely.
  */
 #define m_slist_foreach_value_safe(val, nval, head, member)\
-	for (val = m_slist_value((head)->next, typeof(*(val)), member);\
-				nval = m_slist_value((val)->member.next,\
-					typeof(*(val)), member), val;\
+	for (val = m_node_value((head)->next, typeof(*(val)), member);\
+				nval = (val) ? m_node_value((val)->member.next,\
+					typeof(*(val)), member) : NULL, val;\
 				val = nval)
 
 
@@ -241,6 +233,18 @@ m_slist_init (M_SList *head)
 	assert(head);
 
 	head->next = NULL;
+}
+
+/**
+ * Check if the single linked list is empry.
+ * \param[in] head The list head.
+ * \retval M_TRUE The list is empty.
+ * \retval M_FALSE The list is not empty.
+ */
+static inline M_Bool
+m_slist_empty (M_SList *head)
+{
+	return head->next == NULL;
 }
 
 /**

@@ -30,34 +30,30 @@ extern "C" {
 #endif
 
 #include "m_types.h"
+#include "m_thread.h"
 
 /**The object contains pointer.*/
 #define M_GC_OBJ_FL_PTR   1
-/**The object can be marked as white directly.*/
-#define M_GC_OBJ_FL_WHITE 2
 
-/**The buffer must be allocated in old zone.*/
-#define M_GC_BUF_FL_OLD   1
-/**Executable code buffer.*/
-#define M_GC_BUF_FL_EXE   2
 /**The buffer contains pointer.*/
-#define M_GC_BUF_FL_PTR   4
+#define M_GC_BUF_FL_PTR        1
+/**The buffer is a permanent buffer.*/
+#define M_GC_BUF_FL_PERMANENT  2
+/**Executable code buffer.*/
+#define M_GC_BUF_FL_EXECUTABLE 4
 
 /**GC managed object type.*/
 typedef enum M_GCObjType_e M_GCObjType;
 
-/**Pointer mark function.*/
-typedef void (*M_GCMarkFunc)(void *ptr, M_GCObjType type, uint32_t size);
-
-/**GC data type information.*/
+/**GC data type description.*/
 typedef struct {
 	uint32_t flags;  /**< Flags.*/
 	uint32_t size;   /**< Size in bytes.*/
-	/**Mark the pointer in the data buffer.*/
-	void (*mark) (void *ptr, uint32_t size, M_GCMarkFunc func);
+	/**Scan the pointer in the data buffer.*/
+	void (*scan) (void *ptr);
 	/**Data type finalize function.*/
-	void (*final) (void *ptr, uint32_t size);
-} M_GCObjInfo;
+	void (*final) (void *ptr);
+} M_GCObjDescr;
 
 /**GC managed data type.*/
 enum M_GCObjType_e {
@@ -66,10 +62,10 @@ enum M_GCObjType_e {
 	M_GC_OBJ_DOUBLE,   /**< Double precision number.*/
 	M_GC_OBJ_STRING,   /**< String.*/
 	M_GC_OBJ_OBJECT,   /**< Object.*/
-	M_GC_OBJ_FUNCTION, /**< Function.*/
 	M_GC_OBJ_CLOSURE,  /**< Closure.*/
 	M_GC_OBJ_ARRAY,    /**< Array.*/
-	M_GC_OBJ_FRAME     /**< Value frame.*/
+	M_GC_OBJ_FRAME,    /**< Value frame.*/
+	M_GC_OBJ_COUNT     /**< Count of the object types.*/
 };
 
 /** \cond */
@@ -80,12 +76,62 @@ extern void m_gc_shutdown (void);
 /** \endcond */
 
 /**
+ * Get the current thread's new borned stack level.
+ * \return The current thread's new borned stack's level value.
+ */
+static inline size_t
+m_gc_get_nb_level (void)
+{
+	M_Thread *th;
+
+	th = m_thread_self();
+
+	return th->nb_top;
+}
+
+/**
+ * Restore the current thread's new borned stack level.
+ * \param level The new level value of the new borned stack.
+ */
+static inline size_t
+m_gc_set_nb_level (size_t level)
+{
+	M_Thread *th;
+
+	th = m_thread_self();
+
+	assert(level <= th->nb_top);
+
+	th->nb_top = level;
+}
+
+/**
  * Allocate a new object managed by GC.
  * \param type GC object type.
+ * \param[out] oid Return the object's index.
+ * After allocation, the object's buffer is not initialized.
+ * You should do something to initialize the object.
+ * And invoke "m_gc_add_obj" to make the object is valid for GC.
+ * "oid" is used by "m_gc_add_obj".
  * \return The pointer of the new buffer.
  * \retval NULL On error.
  */
-extern void* m_gc_alloc_obj (M_GCObjType type);
+extern void* m_gc_alloc_obj (M_GCObjType type, size_t *oid);
+
+/**
+ * Set a new allocated object is valid for GC.
+ * \param oid The object's index returned from "m_gc_alloc_obj".
+ */
+static inline void
+m_gc_add_obj (size_t oid)
+{
+	M_Thread *th = m_thread_self();
+
+	assert(oid < th->nb_top);
+
+	/*Clear not initialize flag.*/
+	th->nb_stack[oid] &= ~3;
+}
 
 /**
  * Allocate a new buffer managed by GC.
@@ -115,6 +161,24 @@ extern void* m_gc_realloc_buf (void *ptr, size_t old_size,
  * \param flags Allocate flags.
  */
 extern void  m_gc_free_buf (void *ptr, uint32_t size, uint32_t flags);
+
+/**
+ * Make the object as root object.
+ * \param ptr The root object's pointer.
+ */
+extern void  m_gc_add_root (void *ptr);
+
+/**
+ * Remove an root object.
+ * \param ptr The root object's pointer.
+ */
+extern void  m_gc_remove_root (void *ptr);
+
+/**
+ * Start GC process.
+ * \param flags GC running flags.
+ */
+extern void  m_gc_run (uint32_t flags);
 
 #ifdef __cplusplus
 }

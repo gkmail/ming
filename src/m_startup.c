@@ -29,10 +29,11 @@ static pthread_once_t once = PTHREAD_ONCE_INIT;
 static void
 shutdown (void)
 {
-	M_INFO("ming shutdown");
-
 	m_thread_shutdown();
 	m_gc_shutdown();
+
+	M_INFO("ming shutdown");
+
 	m_log_shutdown();
 }
 

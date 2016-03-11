@@ -17,47 +17,105 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.      *
  *****************************************************************************/
 
-#ifndef _M_OBJECT_H_
-#define _M_OBJECT_H_
+#define M_LOG_TAG "gctest"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <ming.h>
 
-#include "m_types.h"
-#include "m_hash.h"
+static void
+gc_test (void)
+{
+#define PTR_COUNT (1024*1024)
+	size_t level;
+	static void *ptrs[PTR_COUNT];
+	double *pd;
+	size_t id;
+	int i;
+	int count = PTR_COUNT;
 
-/**The property is an accessor.*/
-#define M_PROP_FL_ACCESSOR   1
-/**The property is writable.*/
-#define M_PROP_FL_WRITABLE   2
-/**The property is enumerable.*/
-#define M_PROP_FL_ENUMERABLE 4
+	M_INFO("gc test begin");
 
-/**Property.*/
-typedef struct {
-	M_HashNode node;  /**< Hash table node.*/
-	M_Quark    quark; /**< The name of the property.*/
-	uint16_t   id;    /**< The property's index.*/
-	uint16_t   flags; /**< The property's flags.*/
-} M_Property;
+	level = m_gc_get_nb_level();
 
-/**The object is configurable.*/
-#define M_OBJ_FL_CONFIGURABLE 1
-/**The object is mutable.*/
-#define M_OBJ_FL_MUTABLE      2
+	for (i = 0; i < count; i ++) {
+		pd = m_gc_alloc_obj(M_GC_OBJ_DOUBLE, &id);
+		*pd = i;
+		m_gc_add_obj(id);
+	}
 
-/**Object.*/
-struct M_Object_s {
-	M_Hash   prop_hash; /**< The properties hash table.*/
-	M_Value  protov;    /**< The prototype value.*/
-	M_Value *v;         /**< The property values.*/
-	uint16_t nv;        /**< The number of property values.*/
-	uint16_t flags;     /**< The object's flags.*/
-};
+	m_gc_run(0);
 
-#ifdef __cplusplus
+	m_gc_set_nb_level(level);
+
+	m_gc_run(0);
+
+	M_INFO("gc test end");
 }
-#endif
 
-#endif
+static void*
+thread_entry (void *arg)
+{
+#define LOOP_COUNT  100
+#define ALLOC_COUNT 1024
+	int id = M_PTR_TO_SIZE(arg);
+	size_t level, obj_id;
+	int i, l;
+	double *pd;
+
+	m_thread_enter();
+
+	for (l = 0; l < LOOP_COUNT; l ++) {
+		level = m_gc_get_nb_level();
+
+		for (i = 0; i < ALLOC_COUNT; i ++) {
+			pd = m_gc_alloc_obj(M_GC_OBJ_DOUBLE, &obj_id);
+			*pd = i;
+			m_gc_add_obj(obj_id);
+		}
+
+		m_gc_run(0);
+
+		m_gc_set_nb_level(level);
+
+		m_gc_run(0);
+	}
+
+	m_thread_leave();
+
+	return NULL;
+}
+
+static void
+multithread_test (void)
+{
+#define THREAD_COUNT 64
+	pthread_t th[THREAD_COUNT];
+	int i;
+
+	M_INFO("multithread test begin");
+
+	for (i = 0; i < THREAD_COUNT; i ++) {
+		pthread_create(&th[i], NULL, thread_entry, M_SIZE_TO_PTR(i));
+	}
+
+	for (i = 0; i < THREAD_COUNT; i ++) {
+		m_thread_leave();
+
+		pthread_join(th[i], NULL);
+
+		m_thread_enter();
+	}
+
+	M_INFO("multithread test end");
+}
+
+int
+main (int argc, char **argv)
+{
+	m_startup();
+
+	gc_test();
+	multithread_test();
+
+	return 0;
+}
+

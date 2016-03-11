@@ -140,25 +140,6 @@ typedef struct {
 					pnode = (*(pnode) == node) ? &(node)->next : pnode)
 
 /**
- * Get the container structure's pointer from hash node pointer.
- * \code {.c}
- * struct {
- *		M_HashNode hash_node;
- *		int        my_key;
- *		void      *my_data;
- * } MyHashValue;
- *
- * MyHashValue *value;
- * M_HashNode *node;
- *
- * node  = m_hash_lookup(&hash, M_SIZE_TO_PTR(100), &my_hash_ops);
- * value = m_hash_value(node, MyHashValue, hash_node);
- * \endcode
- */
-#define m_hash_value(node, type, member)\
-	((node) ? M_CONTAINER_OF(node, type, member) : NULL)
-
-/**
  * Traverse each value in the hash table.
  * \a val is value structure pointer pointed to each value.
  * \a pos is an integer to store the node list index.
@@ -185,9 +166,9 @@ typedef struct {
  */
 #define m_hash_foreach_value(val, pos, hash, member)\
 	for (pos = 0; pos < (hash)->nlist; (pos) ++)\
-		for (val = m_hash_value((hash)->lists[pos], typeof(*(val)), member);\
+		for (val = m_node_value((hash)->lists[pos], typeof(*(val)), member);\
 					val;\
-					val = m_hash_value((val)->member.next,\
+					val = m_node_value((val)->member.next,\
 						typeof(*(val)), member))
 
 /**
@@ -223,7 +204,7 @@ typedef struct {
  */
 #define m_hash_foreach_value_safe(val, nval, pos, hash, member)\
 	for (pos = 0; pos < (hash)->nlist; (pos) ++)\
-		for (val = m_hash_value((hash)->lists[pos], typeof(*(val)), member);\
+		for (val = m_node_value((hash)->lists[pos], typeof(*(val)), member);\
 					nval = (val) ? M_CONTAINER_OF((val)->member.next,\
 						typeof(*(val)), member) : NULL,\
 					val;\
@@ -351,6 +332,48 @@ m_hash_lookup_with_kv (M_Hash *hash, void *key, const M_HashOps *ops,
 				return node;
 
 			node = node->next;
+		}
+	}
+
+	return NULL;
+}
+
+/**
+ * Lookup a node in the hash table.
+ * \param[in] hash The hash table.
+ * \param[in] key The key of the node.
+ * \param[in] ops The hash table operation functions.
+ * \param[out] pprev If \a pprev is not NULL,
+ * store the previous node's next pointer.
+ * \return The node with the key find in the hahs table.
+ * \retval NULL Cannot find the node with the key.
+ */
+static __always_inline M_HashNode*
+m_hash_lookup_with_prev (M_Hash *hash, void *key, const M_HashOps *ops,
+			M_HashNode ***pprev)
+{
+	M_HashNode *node, **prev;
+	uint32_t pos;
+	uint32_t kv;
+
+	assert(hash && ops && ops->get_key && ops->kv && ops->equal);
+
+	kv = ops->kv(key);
+
+	if (hash->size) {
+		pos = kv % hash->nlist;
+
+		prev = &hash->lists[pos];
+		node = *prev;
+		while (node) {
+			if (ops->equal(key, ops->get_key(node))) {
+				if (pprev)
+					*pprev = prev;
+				return node;
+			}
+
+			prev = &node->next;
+			node = *prev;
 		}
 	}
 
@@ -523,9 +546,11 @@ m_hash_resize (M_Hash *hash, const M_HashOps *ops)
 		M_HashNode *node, *next;
 
 		nsize = M_MAX(hash->size, 9);
-		nbuf  = M_NEW0(M_HashNode*, nsize);
+		nbuf  = ops->alloc_buf(sizeof(M_HashNode*) * nsize);
 		if (!nbuf)
 			return M_ERR_NO_MEM;
+
+		memset(nbuf, 0, sizeof(M_HashNode*) * nsize);
 
 		m_hash_foreach_safe(node, next, pos, hash) {
 			uint32_t i = ops->kv(ops->get_key(node)) % nsize;

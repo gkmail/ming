@@ -29,7 +29,7 @@ typedef struct {
 static inline void*
 int_get_key (const M_RBNode *node)
 {
-	return M_SIZE_TO_PTR(m_rbt_value(node, IntNode, node)->i);
+	return M_SIZE_TO_PTR(m_node_value(node, IntNode, node)->i);
 }
 
 static const M_RBTreeOps
@@ -130,7 +130,7 @@ traverse_test (void)
 
 	i = 0;
 	m_rbt_foreach(node, &tree) {
-		in = m_rbt_value(node, IntNode, node);
+		in = m_node_value(node, IntNode, node);
 		if (in->i != i) {
 			M_ERROR("traverse error");
 		}
@@ -153,7 +153,7 @@ traverse_test (void)
 
 	i = count;
 	m_rbt_foreach_r(node, &tree) {
-		in = m_rbt_value(node, IntNode, node);
+		in = m_node_value(node, IntNode, node);
 		if (in->i != i - 1) {
 			M_ERROR("traverse error");
 		}
@@ -175,7 +175,7 @@ traverse_test (void)
 	}
 
 	m_rbt_foreach_safe(node, nnode, &tree) {
-		in = m_rbt_value(node, IntNode, node);
+		in = m_node_value(node, IntNode, node);
 		if ((in->i % 10) == 0) {
 			m_rbt_remove(&tree, node);
 			m_free(in);
@@ -183,7 +183,7 @@ traverse_test (void)
 	}
 
 	m_rbt_foreach_safe_r(node, nnode, &tree) {
-		in = m_rbt_value(node, IntNode, node);
+		in = m_node_value(node, IntNode, node);
 		if ((in->i % 10) == 1) {
 			m_rbt_remove(&tree, node);
 			m_free(in);

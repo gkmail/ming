@@ -17,47 +17,84 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.      *
  *****************************************************************************/
 
-#ifndef _M_OBJECT_H_
-#define _M_OBJECT_H_
+#include <m_object.h>
+#include <m_closure.h>
+#include <m_frame.h>
+#include <m_string.h>
+#include <m_array.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#define M_GC_PTR_FLAGS M_GC_OBJ_FL_PTR
+#define M_GC_PTR_SIZE  sizeof(void*)
 
-#include "m_types.h"
-#include "m_hash.h"
-
-/**The property is an accessor.*/
-#define M_PROP_FL_ACCESSOR   1
-/**The property is writable.*/
-#define M_PROP_FL_WRITABLE   2
-/**The property is enumerable.*/
-#define M_PROP_FL_ENUMERABLE 4
-
-/**Property.*/
-typedef struct {
-	M_HashNode node;  /**< Hash table node.*/
-	M_Quark    quark; /**< The name of the property.*/
-	uint16_t   id;    /**< The property's index.*/
-	uint16_t   flags; /**< The property's flags.*/
-} M_Property;
-
-/**The object is configurable.*/
-#define M_OBJ_FL_CONFIGURABLE 1
-/**The object is mutable.*/
-#define M_OBJ_FL_MUTABLE      2
-
-/**Object.*/
-struct M_Object_s {
-	M_Hash   prop_hash; /**< The properties hash table.*/
-	M_Value  protov;    /**< The prototype value.*/
-	M_Value *v;         /**< The property values.*/
-	uint16_t nv;        /**< The number of property values.*/
-	uint16_t flags;     /**< The object's flags.*/
-};
-
-#ifdef __cplusplus
+static inline void
+gc_ptr_scan (void *ptr)
+{
 }
-#endif
 
-#endif
+#define gc_ptr_final NULL
+
+#define M_GC_DOUBLE_FLAGS 0
+#define M_GC_DOUBLE_SIZE  sizeof(double)
+#define gc_double_scan  NULL
+#define gc_double_final NULL
+
+#define M_GC_STRING_FLAGS M_GC_OBJ_FL_PTR
+#define M_GC_STRING_SIZE  sizeof(M_String)
+static inline void
+gc_string_scan (void *ptr)
+{
+}
+
+static inline void
+gc_string_final (void *ptr)
+{
+}
+
+#define M_GC_OBJECT_FLAGS M_GC_OBJ_FL_PTR
+#define M_GC_OBJECT_SIZE  sizeof(M_Object)
+static inline void
+gc_object_scan (void *ptr)
+{
+}
+
+static inline void
+gc_object_final (void *ptr)
+{
+}
+
+#define M_GC_CLOSURE_FLAGS M_GC_OBJ_FL_PTR
+#define M_GC_CLOSURE_SIZE  sizeof(M_Closure)
+static inline void
+gc_closure_scan (void *ptr)
+{
+}
+
+static inline void
+gc_closure_final (void *ptr)
+{
+}
+
+#define M_GC_ARRAY_FLAGS M_GC_OBJ_FL_PTR
+#define M_GC_ARRAY_SIZE  sizeof(M_Array)
+static inline void
+gc_array_scan (void *ptr)
+{
+}
+
+static inline void
+gc_array_final (void *ptr)
+{
+}
+
+#define M_GC_FRAME_FLAGS M_GC_OBJ_FL_PTR
+#define M_GC_FRAME_SIZE  sizeof(M_Frame)
+static inline void
+gc_frame_scan (void *ptr)
+{
+}
+
+static inline void
+gc_frame_final (void *ptr)
+{
+}
+
